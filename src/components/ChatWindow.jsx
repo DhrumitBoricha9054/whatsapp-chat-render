@@ -12,13 +12,13 @@ function MessageBubble({ message, meName }) {
       {message.media && (
         <div className="media">
           {message.media.type === 'image' && message.media.url && (
-            <img src={message.media.url} alt={message.media.name} />
+            <ClickableImage src={message.media.url} alt={message.media.name} />
           )}
           {message.media.type === 'video' && message.media.url && (
-            <video src={message.media.url} controls />
+            <ClickableVideo src={message.media.url} />
           )}
           {message.media.type === 'audio' && message.media.url && (
-            <audio src={message.media.url} controls />
+            <ClickableAudio src={message.media.url} />
           )}
           {(!message.media.url || message.media.type === 'file') && (
             <div>
@@ -37,7 +37,7 @@ function MessageBubble({ message, meName }) {
 }
 
 export default function ChatWindow() {
-  const { chats, activeChatId, myNameByChatId, setMyName } = useChat()
+  const { chats, activeChatId, myNameByChatId, setMyName, openMedia } = useChat()
   const activeChat = chats.find((c) => c.id === activeChatId)
   const meName = activeChat ? myNameByChatId[activeChat.id] : undefined
 
@@ -70,6 +70,29 @@ export default function ChatWindow() {
         </div>
       )}
     </main>
+  )
+}
+
+function ClickableImage({ src, alt }) {
+  const { openMedia, activeChatId } = useChat()
+  return <img src={src} alt={alt} onClick={() => openMedia(activeChatId, src)} style={{ cursor: 'zoom-in' }} />
+}
+
+function ClickableVideo({ src }) {
+  const { openMedia, activeChatId } = useChat()
+  return (
+    <div onClick={() => openMedia(activeChatId, src)} style={{ cursor: 'zoom-in' }}>
+      <video src={src} controls />
+    </div>
+  )
+}
+
+function ClickableAudio({ src }) {
+  const { openMedia, activeChatId } = useChat()
+  return (
+    <div onClick={() => openMedia(activeChatId, src)}>
+      <audio src={src} controls />
+    </div>
   )
 }
 

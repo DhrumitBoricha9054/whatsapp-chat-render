@@ -3,6 +3,7 @@ import { ChatProvider } from './state/ChatContext'
 import Topbar from './components/Topbar'
 import Sidebar from './components/Sidebar'
 import ChatWindow from './components/ChatWindow'
+import MediaViewer from './components/MediaViewer'
 
 function App() {
   return (
@@ -12,6 +13,7 @@ function App() {
         <Sidebar />
         <ChatWindow />
       </div>
+      <MediaViewer />
     </div>
   )
 }

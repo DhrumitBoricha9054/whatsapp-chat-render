@@ -147,3 +147,21 @@ html, body, #root {
   .sidebar.open { transform: translateX(0); }
   .overlay.open { display: block; }
 }
+
+/* Fullscreen media viewer */
+.media-viewer-overlay {
+  position: fixed; inset: 0; z-index: 50;
+  background: rgba(0,0,0,0.85);
+  display: grid; place-items: center;
+}
+.media-viewer { max-width: 92vw; max-height: 88vh; }
+.media-viewer img, .media-viewer video, .media-viewer audio { max-width: 92vw; max-height: 88vh; }
+.media-viewer-close {
+  position: fixed; top: 12px; right: 12px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(255,255,255,0.2);
+  color: #fff; font-size: 18px; width: 36px; height: 36px; border-radius: 999px;
+}
+.media-viewer-nav { position: fixed; bottom: 16px; left: 50%; transform: translateX(-50%); display: flex; gap: 16px; align-items: center; color: #cfd8dc; }
+.media-viewer-nav button { width: 40px; height: 40px; border-radius: 10px; background: rgba(255,255,255,0.08); color: #fff; border: 1px solid rgba(255,255,255,0.2); font-size: 22px; }
+.media-viewer-nav .counter { font-size: 14px; opacity: 0.85; }

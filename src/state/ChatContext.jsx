@@ -9,6 +9,7 @@ export function ChatProvider({ children }) {
   const [activeChatId, setActiveChatId] = useState(null)
   const [isSidebarOpen, setIsSidebarOpen] = useState(false)
   const [myNameByChatId, setMyNameByChatId] = useState({})
+  const [viewer, setViewer] = useState({ open: false, chatId: null, index: 0, mediaList: [] })
 
   const importFromZip = useCallback(async (file) => {
     if (!file) return
@@ -63,6 +64,29 @@ export function ChatProvider({ children }) {
     setMyNameByChatId((prev) => ({ ...prev, [chatId]: name }))
   }, [])
 
+  const openMedia = useCallback((chatId, url) => {
+    if (!chatId || !url) return
+    const chat = chats.find((c) => c.id === chatId)
+    const list = chat ? chat.messages
+      .filter((m) => m.media && m.media.url)
+      .map((m) => ({ type: m.media.type, url: m.media.url, name: m.media.name || '' })) : []
+    const idx = list.findIndex((item) => item.url === url)
+    if (idx >= 0) setViewer({ open: true, chatId, index: idx, mediaList: list })
+  }, [chats])
+
+  const closeMedia = useCallback(() => {
+    setViewer({ open: false, chatId: null, index: 0, mediaList: [] })
+  }, [])
+
+  const stepMedia = useCallback((direction) => {
+    setViewer((prev) => {
+      if (!prev.open || !prev.mediaList || prev.mediaList.length === 0) return prev
+      const count = prev.mediaList.length
+      const nextIndex = (prev.index + direction + count) % count
+      return { ...prev, index: nextIndex }
+    })
+  }, [])
+
   const value = useMemo(() => ({
     chats,
     activeChatId,
@@ -73,7 +97,11 @@ export function ChatProvider({ children }) {
     closeSidebar,
     myNameByChatId,
     setMyName,
-  }), [chats, activeChatId, importFromZip, isSidebarOpen, toggleSidebar, closeSidebar, myNameByChatId, setMyName])
+    viewer,
+    openMedia,
+    closeMedia,
+    stepMedia,
+  }), [chats, activeChatId, importFromZip, isSidebarOpen, toggleSidebar, closeSidebar, myNameByChatId, setMyName, viewer, openMedia, closeMedia, stepMedia])
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>
 }
