@@ -27,40 +27,48 @@ export default function Login({ onLogin }) {
       >
         <h2>Welcome Back</h2>
         <form onSubmit={handleSubmit}>
-          <input
-            type="text"
-            placeholder="Username"
-            value={username}
-            onChange={(e) => setUsername(e.target.value)}
-          />
+  <input
+    type="text"
+    placeholder="Username"
+    value={username}
+    onChange={(e) => setUsername(e.target.value)}
+  />
 
-          <div className="password-wrapper">
-            <input
-              type={showPassword ? "text" : "password"}
-              placeholder="Password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-            />
-            <motion.span
-              className="eye-icon"
-              onClick={() => setShowPassword(!showPassword)}
-              whileTap={{ rotate: 360 }}
-              transition={{ duration: 0.4 }}
-            >
-              {showPassword ? "🙈" : "👁️"}
-            </motion.span>
-          </div>
+  <div className="password-wrapper">
+    <input
+      type={showPassword ? "text" : "password"}
+      placeholder="Password"
+      value={password}
+      onChange={(e) => setPassword(e.target.value)}
+    />
+    <motion.span
+      className="eye-icon"
+      onClick={() => setShowPassword(!showPassword)}
+      whileTap={{ rotate: 360 }}
+      transition={{ duration: 0.4 }}
+    >
+      {showPassword ? "🙈" : "👁️"}
+    </motion.span>
+  </div>
 
-          {error && <p className="error">{error}</p>}
+  {error && <p className="error">{error}</p>}
 
-          <motion.button
-            type="submit"
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-          >
-            Login
-          </motion.button>
-        </form>
+  <motion.button
+    type="submit"
+    whileHover={{ scale: 1.05 }}
+    whileTap={{ scale: 0.95 }}
+  >
+    Login
+  </motion.button>
+</form>
+
+{/* Demo credentials */}
+<div className="demo-box">
+  <strong>Demo Credentials:</strong>
+  <p>Username: <code>Dhrumit</code></p>
+  <p>Password: <code>Dhrumit123</code></p>
+</div>
+
 
         {/* Footer Credit */}
         <div className="login-footer">

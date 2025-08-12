@@ -141,6 +141,28 @@
     border-color: rgba(43, 58, 47, 0.7);
   }
   
+  /* Demo credentials box */
+.demo-box {
+    margin-top: 25px;
+    padding: 18px;
+    border-radius: 14px;
+    background: rgba(230, 253, 236, 0.85);
+    border: 1px solid rgba(188, 222, 197, 0.6);
+    font-size: 1rem;
+    text-align: left;
+    color: #2b3a2f;
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+  }
+  
+  .demo-box strong {
+    color: #2b3a2f;
+  }
+  
+  .demo-box p {
+    margin: 5px 0;
+    line-height: 1.4;
+  }
+  
   
   /* Background animation */
   @keyframes gradientMove {
