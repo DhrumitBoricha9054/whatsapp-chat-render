@@ -38,19 +38,48 @@ export function ChatProvider({ children }) {
       for (const m of mediaEntries) {
         const base = m.name.split('/').pop()
         mediaByBase.set(base, m)
+        mediaByBase.set(base.toLowerCase(), m)
       }
 
       for (const msg of messages) {
-        const fileNameMatch = msg.content.match(/([^\s]+\.(?:png|jpe?g|gif|webp|mp4|webm|mov|m4v|mp3|wav|ogg|m4a|pdf))/i)
+        // Build list of filename candidates. Prefer those inside the <attached: ...> section first.
+        const filenameRegex = /([\w\s()\-.,@!$%#&+~=^`'\[\]]+\.(?:png|jpe?g|gif|webp|mp4|webm|mov|m4v|mp3|wav|ogg|m4a|pdf))/ig
+        const candidates = []
+
+        const attachedBlock = msg.content.match(/<\s*attached:\s*([^>]+)\s*>/i)
+        if (attachedBlock && attachedBlock[1]) {
+          let m
+          while ((m = filenameRegex.exec(attachedBlock[1])) !== null) {
+            candidates.push(m[1])
+          }
+        }
+        // Then add any other filenames in the entire message
+        let match
+        while ((match = filenameRegex.exec(msg.content)) !== null) {
+          const name = match[1]
+          if (!candidates.includes(name)) candidates.push(name)
+        }
+
         const isOmitted = /<attachment omitted>/i.test(msg.content)
-        const base = fileNameMatch?.[1]
-        const mediaFile = base ? mediaByBase.get(base) : undefined
+
+        let chosenBase = null
+        for (const cand of candidates) {
+          const b = cand.split('/').pop()
+          if (mediaByBase.has(b)) { chosenBase = b; break }
+          if (mediaByBase.has(b.toLowerCase())) { chosenBase = b.toLowerCase(); break }
+        }
+
+        const mediaFile = chosenBase ? mediaByBase.get(chosenBase) : undefined
         if (mediaFile) {
           const rawBlob = await mediaFile.async('blob')
-          const isPdf = /\.pdf$/i.test(base || '')
+          const isPdf = /\.pdf$/i.test(chosenBase || '')
           const blob = isPdf ? new Blob([rawBlob], { type: 'application/pdf' }) : rawBlob
           const objectUrl = URL.createObjectURL(blob)
-          msg.media = { type: inferMediaType(base), name: base, url: objectUrl }
+          msg.media = { type: inferMediaType(chosenBase), name: chosenBase, url: objectUrl }
+        } else if (candidates.length > 0) {
+          // We detected a filename but could not find the file in ZIP; still expose it to UI
+          const fallbackName = candidates[0].split('/').pop()
+          msg.media = { type: inferMediaType(fallbackName), name: fallbackName, url: null }
         } else if (isOmitted) {
           msg.media = { type: 'file', name: 'attachment', url: null }
         }
@@ -58,8 +87,18 @@ export function ChatProvider({ children }) {
 
       const chatName = chatFile.name.replace(/\.txt$/i, '').split('/').pop()
       
-      // Check if chat with same name already exists
-      const existingChat = chats.find((c) => c.name === chatName)
+      // Extract participants from messages to identify the actual chat
+      const chatParticipants = Array.from(new Set(messages.map(m => m.author))).sort()
+      const participantKey = chatParticipants.join('|')
+      
+      // Find existing chat by participants (not just filename)
+      const existingChat = chats.find((c) => {
+        // Check if participants match (this is the real identifier)
+        const existingParticipants = Array.from(new Set(c.participants)).sort()
+        const existingKey = existingParticipants.join('|')
+        
+        return existingKey === participantKey
+      })
       
       if (existingChat) {
         // Prefer fast-path: find the index of the last existing message in the new import
@@ -84,6 +123,8 @@ export function ChatProvider({ children }) {
             ...existingChat,
             messages: [...existingChat.messages, ...newMessages],
             participants: Array.from(new Set([...existingChat.participants, ...messages.map((m) => m.author)])).slice(0, 5),
+            // Preserve the original chat name
+            name: existingChat.name
           }
           updatedChats.push(updatedChat)
           updatedCount++
@@ -93,9 +134,33 @@ export function ChatProvider({ children }) {
         }
       } else {
         // New chat, add it
+        // Create a meaningful chat name based on participants
+        let finalChatName = chatName
+        
+        // If it's a generic name like "_chat", create a better name
+        if (chatName === '_chat' || chatName === 'chat' || chatName === 'Chat') {
+          if (chatParticipants.length === 2) {
+            // Individual chat: use the other person's name
+            const otherPerson = chatParticipants.find(p => p !== globalUserName)
+            finalChatName = otherPerson || chatParticipants[0]
+          } else if (chatParticipants.length > 2) {
+            // Group chat: use first few participant names
+            const displayParticipants = chatParticipants.slice(0, 3).join(', ')
+            finalChatName = `${displayParticipants}${chatParticipants.length > 3 ? '...' : ''}`
+          }
+        }
+        
+        // Ensure the name is unique
+        let uniqueName = finalChatName
+        let counter = 1
+        while (chats.some(c => c.name === uniqueName)) {
+          uniqueName = `${finalChatName} (${counter})`
+          counter++
+        }
+        
         newChats.push({
           id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-          name: chatName,
+          name: uniqueName,
           participants: Array.from(new Set(messages.map((m) => m.author))).slice(0, 5),
           messages,
         })
@@ -173,6 +238,47 @@ export function ChatProvider({ children }) {
     })
   }, [])
 
+  // Delete single chat
+  const deleteChat = useCallback((chatId) => {
+    if (!chatId) return
+    
+    setChats(prev => prev.filter(chat => chat.id !== chatId))
+    
+    // If deleted chat was active, switch to first available chat
+    if (activeChatId === chatId) {
+      const remainingChats = chats.filter(chat => chat.id !== chatId)
+      if (remainingChats.length > 0) {
+        setActiveChatId(remainingChats[0].id)
+      } else {
+        setActiveChatId(null)
+      }
+    }
+  }, [activeChatId, chats])
+
+  // Delete multiple chats
+  const deleteMultipleChats = useCallback((chatIds) => {
+    if (!chatIds || chatIds.length === 0) return
+    
+    setChats(prev => prev.filter(chat => !chatIds.includes(chat.id)))
+    
+    // If active chat was deleted, switch to first available chat
+    if (activeChatId && chatIds.includes(activeChatId)) {
+      const remainingChats = chats.filter(chat => !chatIds.includes(chat.id))
+      if (remainingChats.length > 0) {
+        setActiveChatId(remainingChats[0].id)
+      } else {
+        setActiveChatId(null)
+      }
+    }
+  }, [activeChatId, chats])
+
+  // Clear all chats
+  const clearAllChats = useCallback(() => {
+    setChats([])
+    setActiveChatId(null)
+    setViewer({ open: false, chatId: null, index: 0, mediaList: [] })
+  }, [])
+
   const value = useMemo(() => ({
     chats,
     activeChatId,
@@ -190,7 +296,10 @@ export function ChatProvider({ children }) {
     closeMedia,
     stepMedia,
     importStats,
-  }), [chats, activeChatId, importFromZip, isSidebarOpen, toggleSidebar, closeSidebar, globalUserName, setGlobalName, myNameByChatId, setMyName, viewer, openMedia, closeMedia, stepMedia, importStats])
+    deleteChat,
+    deleteMultipleChats,
+    clearAllChats,
+  }), [chats, activeChatId, importFromZip, isSidebarOpen, toggleSidebar, closeSidebar, globalUserName, setGlobalName, myNameByChatId, setMyName, viewer, openMedia, closeMedia, stepMedia, importStats, deleteChat, deleteMultipleChats, clearAllChats])
 
   return <ChatContext.Provider value={value}>{children}</ChatContext.Provider>
 }
