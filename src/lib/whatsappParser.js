@@ -45,6 +45,7 @@ export function inferMediaType(filename) {
   if (/(\.png|\.jpe?g|\.gif|\.webp)$/.test(lower)) return 'image'
   if (/(\.mp4|\.webm|\.mov|\.m4v)$/.test(lower)) return 'video'
   if (/(\.mp3|\.wav|\.ogg|\.m4a)$/.test(lower)) return 'audio'
+  if (/(\.pdf)$/.test(lower)) return 'pdf'
   return 'file'
 }
 

@@ -3,7 +3,7 @@ import { useChat } from '../state/ChatContext'
 
 export default function Topbar() {
   const inputRef = useRef(null)
-  const { importFromZip, toggleSidebar, logout } = useChat()
+  const { importFromZip, toggleSidebar, logout, globalUserName, setGlobalName, importStats } = useChat()
   const [showLogoutModal, setShowLogoutModal] = useState(false)
 
   const handleLogout = () => {
@@ -27,6 +27,28 @@ export default function Topbar() {
         </button>
 
         <div className="title">WhatsApp Chat Viewer</div>
+
+        <div className="user-name-section">
+          <label htmlFor="globalUserName" style={{ color: '#8696a0', fontSize: 12, marginRight: 8 }}>
+            Your name:
+          </label>
+          <input
+            id="globalUserName"
+            placeholder="Type exactly as it appears in chat"
+            value={globalUserName || ''}
+            onChange={(e) => setGlobalName(e.target.value)}
+            style={{
+              background: '#0f1b21', 
+              border: '1px solid #0e171c', 
+              color: '#cfe2ea',
+              borderRadius: 8, 
+              padding: '6px 8px', 
+              fontSize: 12, 
+              width: 200,
+              marginRight: 16
+            }}
+          />
+        </div>
 
         <div className="actions">
           <input
@@ -61,6 +83,26 @@ export default function Topbar() {
         </div>
       </div>
 
+      {/* Import Statistics Notification */}
+      {importStats && (
+        <div className="import-notification">
+          <div className="notification-content">
+            <h4>Import Complete!</h4>
+            <div className="stats">
+              {importStats.added > 0 && (
+                <span className="stat-item added">+{importStats.added} new chat{importStats.added !== 1 ? 's' : ''}</span>
+              )}
+              {importStats.updated > 0 && (
+                <span className="stat-item updated">~{importStats.updated} chat{importStats.updated !== 1 ? 's' : ''} updated</span>
+              )}
+              {importStats.skipped > 0 && (
+                <span className="stat-item skipped">-{importStats.skipped} duplicate{importStats.skipped !== 1 ? 's' : ''} skipped</span>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Logout Confirmation Modal */}
       {showLogoutModal && (
         <div className="modal-overlay">
@@ -83,6 +125,44 @@ export default function Topbar() {
       )}
 
       <style jsx>{`
+        .topbar {
+          display: flex;
+          align-items: center;
+          gap: 16px;
+          padding: 12px 16px;
+          background: #0f1b21;
+          border-bottom: 1px solid #0e171c;
+        }
+        
+        .user-name-section {
+          display: flex;
+          align-items: center;
+          margin-left: auto;
+          margin-right: 16px;
+        }
+        
+        .title {
+          font-size: 1.2rem;
+          font-weight: 600;
+          color: #cfe2ea;
+          white-space: nowrap;
+        }
+        
+        .actions {
+          display: flex;
+          align-items: center;
+          gap: 12px;
+        }
+        
+        .user-name-section input {
+          transition: border-color 0.2s ease;
+        }
+        
+        .user-name-section input:focus {
+          outline: none;
+          border-color: #00b894;
+        }
+        
         .logout-btn {
           background: #ff4d4d;
           color: white;
@@ -157,6 +237,60 @@ export default function Topbar() {
         @keyframes fadeIn {
           from { transform: scale(0.9); opacity: 0; }
           to { transform: scale(1); opacity: 1; }
+        }
+
+        /* Import Notification Styles */
+        .import-notification {
+          position: fixed;
+          top: 80px;
+          right: 20px;
+          background: white;
+          border-radius: 12px;
+          padding: 16px;
+          width: 300px;
+          box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+          z-index: 1000;
+          animation: slideInRight 0.3s ease;
+        }
+        
+        .notification-content h4 {
+          margin: 0 0 12px 0;
+          font-size: 1.1rem;
+          font-weight: 600;
+          color: #2b3a2f;
+        }
+        
+        .stats {
+          display: flex;
+          flex-direction: column;
+          gap: 6px;
+        }
+        
+        .stat-item {
+          font-size: 0.9rem;
+          padding: 4px 8px;
+          border-radius: 6px;
+          font-weight: 500;
+        }
+        
+        .stat-item.added {
+          background: #e8f5e8;
+          color: #2d5a2d;
+        }
+        
+        .stat-item.updated {
+          background: #fff3cd;
+          color: #856404;
+        }
+        
+        .stat-item.skipped {
+          background: #f8d7da;
+          color: #721c24;
+        }
+        
+        @keyframes slideInRight {
+          from { transform: translateX(100%); opacity: 0; }
+          to { transform: translateX(0); opacity: 1; }
         }
       `}</style>
     </>

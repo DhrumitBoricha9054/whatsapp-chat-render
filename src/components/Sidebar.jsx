@@ -22,6 +22,9 @@ export default function Sidebar() {
             <div style={{ fontSize: 12, color: '#8696a0' }}>
               {chat.participants.join(', ')}
             </div>
+            <div style={{ fontSize: 11, color: '#667781', marginTop: 4 }}>
+              {chat.messages.length} message{chat.messages.length !== 1 ? 's' : ''}
+            </div>
           </div>
         ))}
       </aside>

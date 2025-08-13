@@ -20,9 +20,14 @@ function MessageBubble({ message, meName }) {
           {message.media.type === 'audio' && message.media.url && (
             <ClickableAudio src={message.media.url} />
           )}
+          {message.media.type === 'pdf' && message.media.url && (
+            <ClickablePdf src={message.media.url} name={message.media.name} />
+          )}
           {(!message.media.url || message.media.type === 'file') && (
             <div>
-              <span>{message.media.name}</span>
+              <a href={message.media.url || '#'} download={message.media.name} style={{ color: '#53bdeb' }}>
+                {message.media.name || 'attachment'}
+              </a>
             </div>
           )}
         </div>
@@ -37,9 +42,8 @@ function MessageBubble({ message, meName }) {
 }
 
 export default function ChatWindow() {
-  const { chats, activeChatId, myNameByChatId, setMyName, openMedia } = useChat()
+  const { chats, activeChatId, globalUserName, openMedia } = useChat()
   const activeChat = chats.find((c) => c.id === activeChatId)
-  const meName = activeChat ? myNameByChatId[activeChat.id] : undefined
 
   return (
     <main className="chat-window" role="main">
@@ -48,24 +52,11 @@ export default function ChatWindow() {
       )}
       {activeChat && (
         <div className="messages" tabIndex={0} style={{ outline: 'none' }} onMouseDown={(e) => e.stopPropagation()}>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center', margin: '0 0 8px 0' }}>
-            <label htmlFor="meName" style={{ color: '#8696a0', fontSize: 12 }}>Your name:</label>
-            <input
-              id="meName"
-              placeholder="Type exactly as it appears in chat"
-              value={meName || ''}
-              onChange={(e) => setMyName(activeChat.id, e.target.value)}
-              style={{
-                background: '#0f1b21', border: '1px solid #0e171c', color: '#cfe2ea',
-                borderRadius: 8, padding: '6px 8px', fontSize: 12, width: 260
-              }}
-            />
-          </div>
           {activeChat.messages.length === 0 && (
             <div className="empty-state">No messages parsed from this export</div>
           )}
           {activeChat.messages.map((m) => (
-            <MessageBubble key={m.id} message={m} meName={meName} />
+            <MessageBubble key={m.id} message={m} meName={globalUserName} />
           ))}
         </div>
       )}
@@ -92,6 +83,16 @@ function ClickableAudio({ src }) {
   return (
     <div onClick={() => openMedia(activeChatId, src)}>
       <audio src={src} controls />
+    </div>
+  )
+}
+
+function ClickablePdf({ src, name }) {
+  const { openMedia, activeChatId } = useChat()
+  return (
+    <div onClick={() => openMedia(activeChatId, src)} style={{ cursor: 'zoom-in', display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+      <span style={{ background: '#1f2c33', color: '#cfe2ea', padding: '6px 8px', borderRadius: 6 }}>PDF</span>
+      <span style={{ color: '#53bdeb', textDecoration: 'underline' }}>{name || 'document.pdf'}</span>
     </div>
   )
 }

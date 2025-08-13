@@ -50,6 +50,12 @@ export default function MediaViewer() {
         {current.item.type === 'audio' && (
           <audio src={current.item.url} controls autoPlay />
         )}
+        {current.item.type === 'pdf' && (
+          <div style={{ width: '80vw', height: '80vh', display: 'flex', flexDirection: 'column', gap: 8 }}>
+            <iframe src={current.item.url} title={current.item.name || 'document.pdf'} style={{ width: '100%', height: '100%', background: '#fff', borderRadius: 8 }} />
+            <a href={current.item.url} download={current.item.name || 'document.pdf'} style={{ color: '#53bdeb', alignSelf: 'flex-end' }}>Download PDF</a>
+          </div>
+        )}
       </div>
       <div className="media-viewer-nav">
         <button onClick={(e) => { e.stopPropagation(); stepMedia(-1) }} aria-label="Previous">‹</button>
