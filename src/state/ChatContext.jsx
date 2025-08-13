@@ -123,7 +123,7 @@ export function ChatProvider({ children }) {
             ...existingChat,
             messages: [...existingChat.messages, ...newMessages],
             participants: Array.from(new Set([...existingChat.participants, ...messages.map((m) => m.author)])).slice(0, 5),
-            // Preserve the original chat name
+            // Preserve the original chat name (should be the other person's name)
             name: existingChat.name
           }
           updatedChats.push(updatedChat)
@@ -140,13 +140,14 @@ export function ChatProvider({ children }) {
         // If it's a generic name like "_chat", create a better name
         if (chatName === '_chat' || chatName === 'chat' || chatName === 'Chat') {
           if (chatParticipants.length === 2) {
-            // Individual chat: use the other person's name
+            // Individual chat: use the other person's name (not the current user)
             const otherPerson = chatParticipants.find(p => p !== globalUserName)
             finalChatName = otherPerson || chatParticipants[0]
           } else if (chatParticipants.length > 2) {
-            // Group chat: use first few participant names
-            const displayParticipants = chatParticipants.slice(0, 3).join(', ')
-            finalChatName = `${displayParticipants}${chatParticipants.length > 3 ? '...' : ''}`
+            // Group chat: use participant names but exclude the current user
+            const otherParticipants = chatParticipants.filter(p => p !== globalUserName)
+            const displayParticipants = otherParticipants.slice(0, 3).join(', ')
+            finalChatName = `${displayParticipants}${otherParticipants.length > 3 ? '...' : ''}`
           }
         }
         
